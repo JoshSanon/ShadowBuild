@@ -11,7 +11,11 @@ import org.newdawn.slick.tiled.TiledMap;
  */
 public class World {
 	// Initializing the variable map which is and object and stores the entire map of the game
-	public TiledMap map;
+	private TiledMap map;
+	public Camera camera;
+	
+	public int mapWidth;
+	public int mapHeight;
 	
 	// Initializing the variable scout, which is an object and the player's piece in the game
 	public Scout scout;
@@ -20,8 +24,11 @@ public class World {
 		// Creating an object of class TiledMap, map and giving it details from main.tmx file
 		map= new TiledMap("assets/main.tmx");
 		
+		mapWidth = map.getWidth() * map.getTileWidth();
+		mapHeight = map.getHeight() * map.getTileHeight();
+		camera= new Camera(map,mapWidth,mapHeight);
 		// Creating the object of class Scout, scout and giving its initial coordinates on the map
-		scout=new Scout(0,0);
+		scout=new Scout(mapWidth/2,mapHeight/2);
 	}
 	/** Update the game state for a frame.
      * @param input The Slick object for user inputs.
@@ -30,13 +37,14 @@ public class World {
 	public void update(Input input, int delta) {
 		
 		// Calling the method move in the class Scout which allows player to move their piece
-		scout.move(input,delta);
+		scout.move(input,delta,map,camera);
 	}
 	
 	/** Render the entire screen, so it reflects the current game state.
      * @param g The Slick graphics object, used for drawing.
      */
 	public void render(Graphics g) {
+		camera.translate(g, scout);
 		
 		// Rendering the map
 		map.render(0,0);

@@ -1,26 +1,44 @@
+import org.newdawn.slick.Graphics;
+import org.newdawn.slick.geom.Rectangle;
+import org.newdawn.slick.tiled.TiledMap;
 
-/**
- * This class should be used to restrict the game's view to a subset of the entire world.
- * 
- * You are free to make ANY modifications you see fit.
- * These classes are provided simply as a starting point. You are not strictly required to use them.
- */
 public class Camera {
+	/** window width, in pixels */
+    public static final int WINDOW_WIDTH = 1024;
+    /** window height, in pixels */
+    public static final int WINDOW_HEIGHT = 768;
 
-	public float getLeft() {
-		// You probably want to change this.
-		return 0;
-	}
-	public float getTop() {
-		// You probably want to change this.
-		return 0;
-	}
-	public float getRight() {
-		// You probably want to change this.
-		return 0;
-	}
-	public float getBottom() {
-		// You probably want to change this.
-		return 0;
-	}
+    public int x, y;
+    private int mapWidth, mapHeight;
+    private Rectangle viewPort;
+
+    public Camera(TiledMap map, int mapWidth, int mapHeight) {
+        x = 0;
+        y = 0;
+        viewPort = new Rectangle(WINDOW_WIDTH/2,WINDOW_HEIGHT/2 , WINDOW_WIDTH, WINDOW_HEIGHT);
+        this.mapWidth = mapWidth;
+        this.mapHeight = mapHeight;
+    }
+
+    public void translate(Graphics g, Scout scout) {
+
+        if (scout.getX() - WINDOW_WIDTH / 2 + 1 < 0) {
+            x = 0;
+        } else if (scout.getX() + WINDOW_WIDTH / 2 + 16 > mapWidth) {
+            x = -mapWidth + WINDOW_WIDTH;
+        } else {
+            x = (int) -scout.getX() + WINDOW_WIDTH / 2 - 16;
+        }
+
+        if (scout.getY() - WINDOW_HEIGHT / 2 + 16 < 0) {
+            y = 0;
+        } else if (scout.getY() + WINDOW_HEIGHT / 2 + 16 > mapHeight) {
+            y = -mapHeight + WINDOW_HEIGHT;
+        } else {
+            y = (int) -scout.getY() + WINDOW_HEIGHT / 2 - 16;
+        }
+        g.translate(x, y);
+        viewPort.setX(-x);
+        viewPort.setY(-y);
+    }
 }
