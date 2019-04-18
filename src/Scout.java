@@ -32,8 +32,8 @@ public class Scout {
     public void move(Input input,int delta,TiledMap map,Camera camera) {
 		if (input.isMousePressed(Input.MOUSE_RIGHT_BUTTON)) {
 			
-			destX=input.getAbsoluteMouseX()-camera.x;
-			destY=input.getAbsoluteMouseY()-camera.y;
+			destX=input.getAbsoluteMouseX()-camera.getX();
+			destY=input.getAbsoluteMouseY()-camera.getY();
 			angle = Math.atan2(destY-this.y,destX-this.x);	
 		}
 		if(Math.hypot(x-destX, y-destY)>speed) {
