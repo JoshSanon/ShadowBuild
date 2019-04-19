@@ -21,6 +21,10 @@ public class App extends BasicGame {
     public static final int WINDOW_WIDTH = 1024;
     /** window height, in pixels */
     public static final int WINDOW_HEIGHT = 768;
+    /** half the window width, in pixels */
+    public static final int HALF_WINDOW_WIDTH = 512;
+    /** half the window height, in pixels */
+    public static final int HALF_WINDOW_HEIGHT = 384;
 
     private World world;
 

@@ -4,10 +4,7 @@ import org.newdawn.slick.SlickException;
 import org.newdawn.slick.tiled.TiledMap;
 
 /**
- * This class should be used to contain all the different objects in your game world, and schedule their interactions.
- * 
- * You are free to make ANY modifications you see fit.
- * These classes are provided simply as a starting point. You are not strictly required to use them.
+ * This class is used to contain all the different objects in your game world, and schedule their interactions.
  */
 
 public class World {
