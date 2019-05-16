@@ -15,6 +15,5 @@ public class Scout extends Unit{
 	{
 		return this.speed;
 	}
-
 }
 

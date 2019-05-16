@@ -40,28 +40,34 @@ public class Camera {
     	// Making sure the camera does not show off the map otherwise computes the x offset to keep the player at the center of screen
         if (Unit.getX() - App.HALF_WINDOW_WIDTH < 0) {
             x = 0;
+            world.worldX=App.HALF_WINDOW_WIDTH;
         } else if (Unit.getX() + App.HALF_WINDOW_WIDTH > mapWidthPix) {
             x = App.WINDOW_WIDTH-mapWidthPix;
+            world.worldX=mapWidthPix-App.HALF_WINDOW_WIDTH;
         } else {
             x =  App.HALF_WINDOW_WIDTH-Unit.getX();
+            world.worldX=Unit.getX();
         }
         
         // Making sure the camera does not show off the map otherwise computes the y offset to keep the player at the center of screen
         if (Unit.getY() - App.HALF_WINDOW_HEIGHT < 0) {
             y = 0;
+            world.worldY=App.HALF_WINDOW_HEIGHT;
         } else if (Unit.getY() + App.HALF_WINDOW_HEIGHT > mapHeightPix) {
             y = App.WINDOW_HEIGHT-mapHeightPix ;
+            world.worldY=mapHeightPix-App.HALF_WINDOW_HEIGHT;
         } else {
             y =  App.HALF_WINDOW_HEIGHT-Unit.getY() ;
+            world.worldY=Unit.getY();
         }
-        world.worldX=Unit.getX();
-        world.worldY=Unit.getY();
+        //world.worldX=Unit.getX();
+        //world.worldY=Unit.getY();
                 
     }
     
     public void KeyMove(Input input,World world,int delta) {
     	if(input.isKeyDown(Input.KEY_W)){
-    		if (world.worldY - App.HALF_WINDOW_HEIGHT < 0) {
+    		if (world.worldY - App.HALF_WINDOW_HEIGHT <= 0) {
                 y = 0;
             } 
     		else {
@@ -70,7 +76,7 @@ public class Camera {
             }
     	}
     	if(input.isKeyDown(Input.KEY_S)){
-    		if (world.worldY + App.HALF_WINDOW_HEIGHT > mapHeightPix) {
+    		if (world.worldY + App.HALF_WINDOW_HEIGHT >= mapHeightPix) {
                 y = App.WINDOW_HEIGHT-mapHeightPix;
             } 
     		else {
@@ -100,17 +106,25 @@ public class Camera {
     public void snap(World world) {
     	if (world.worldX- App.HALF_WINDOW_WIDTH < 0) {
             x = 0;
-        } else if (world.worldX + App.HALF_WINDOW_WIDTH > mapWidthPix) {
+            world.worldX=App.HALF_WINDOW_WIDTH;
+        } 
+    	else if (world.worldX + App.HALF_WINDOW_WIDTH > mapWidthPix) {
             x = App.WINDOW_WIDTH-mapWidthPix;
-        } else {
+            world.worldX=mapWidthPix-App.HALF_WINDOW_WIDTH;
+        } 
+        else {
             x =  App.HALF_WINDOW_WIDTH-world.worldX;
         }
     	
     	if (world.worldY - App.HALF_WINDOW_HEIGHT < 0) {
             y = 0;
-        } else if (world.worldY + App.HALF_WINDOW_HEIGHT > mapHeightPix) {
+            world.worldY=App.HALF_WINDOW_HEIGHT;
+        } 
+    	else if (world.worldY + App.HALF_WINDOW_HEIGHT > mapHeightPix) {
             y = App.WINDOW_HEIGHT-mapHeightPix ;
-        } else {
+            world.worldY=mapHeightPix-App.HALF_WINDOW_HEIGHT;
+        } 
+    	else {
             y =  App.HALF_WINDOW_HEIGHT-world.worldY ;
         }
     	isOffset=false;

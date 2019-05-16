@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.tiled.TiledMap;
@@ -19,7 +21,9 @@ public abstract class  Unit {
 	// Storing the angle between current position and destination using atan2() function in variable angle
 	private double angle;
 	
+	public final float destinationDist=0.25f;
 	public boolean isSelected;
+	public boolean hasReachedDest;
     
 	// Initializing the variable image which is an object of class Image that will store the image of the piece
 	public  Image image;
@@ -35,6 +39,7 @@ public abstract class  Unit {
 		this.destY=y;
 		angle=0;
 		isSelected=false;
+		hasReachedDest=true;
 	}
 	
 	//Getters for x and y coordinates
@@ -57,13 +62,14 @@ public abstract class  Unit {
      * @param map The Entire map of the game
      */
     public void move(int delta,TiledMap map,Camera camera) {
+    	hasReachedDest=false;
 		
     	angle = Math.atan2(destY-this.y,destX-this.x);	
 		
 		/* Using math.hypot() to find the distance between current position and destination and checking if its greater
 		 * than the speed at which travels
 		 */		
-		if(Math.hypot(x-destX, y-destY)>this.getSpeed()) {
+		if(Math.hypot(x-destX, y-destY)>destinationDist) {
 			
 			// Computing the new position of the piece as it moves towards its destination
 			float new_x=this.x+(float)Math.cos(angle) *delta*this.getSpeed();
@@ -92,6 +98,9 @@ public abstract class  Unit {
 			this.y= new_y;
 			}
 		}
+		else {
+			hasReachedDest=true;
+		}
     }
     
     // Renders the piece onto the screen
@@ -104,5 +113,20 @@ public abstract class  Unit {
 	public float getSpeed()
 	{
 		return this.speed;
+	}
+	public Resource canMine(ArrayList<Resource> resource) {
+		return null;
+	}
+
+	public void mineMaterial(Building building, int delta,Resource resource,World world) {
+		return;
+	}
+
+	public float getDestX() {
+		return destX;
+	}
+
+	public float getDestY() {
+		return destY;
 	}
 }

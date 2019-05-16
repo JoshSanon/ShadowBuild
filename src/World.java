@@ -1,10 +1,12 @@
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
+import org.newdawn.slick.gui.TextField;
 import org.newdawn.slick.tiled.TiledMap;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -22,21 +24,22 @@ public class World {
 	// Initializing the variable camera which is an object that stores the camera of the game, showing a specific part of the map
 	private static Camera camera;
 	
-	private Building[] buildings;
+	private ArrayList<Building> buildings;
 	
 	// Initializing variables which will hold the values of height and width in pixels of the map
 	private static int mapWidthPix;
 	private static int mapHeightPix;
 	
 	// Initializing the variable Unit, which is an object and the player's piece in the game
-	private Unit units[];
-	private Resource resources[];
-	public int unitsCnt;
-	public int buildingsCnt;
-	public int resourcesCnt;
-	boolean unitMoving;
+	private ArrayList<Unit> units;
+	public ArrayList<Resource>resources;
 	public Unit selectedUnit;
 	public Building selectedBuilding;
+	public TextField text;
+	public int currMetal;
+	public int currUnobtainium;
+	public boolean unitMoving;
+	public Resource currMined;
 	
 	public void setWorldX(float x) {
     	worldX=x;
@@ -59,19 +62,18 @@ public class World {
 		worldX= mapWidthPix/2;
 		worldY=mapHeightPix/2;
 		unitMoving=false;
-		unitsCnt=0;
-		buildingsCnt=0;
-		resourcesCnt=0;
-		buildings=new Building[100];
-		units= new Unit[100];
-		resources= new Resource[100];
+		currMetal=0;
+		currUnobtainium=0;
+		buildings= new ArrayList<Building>();
+		units= new ArrayList<Unit>();
+		resources= new ArrayList<Resource>();
 		initialMap(buildings,units,resources);
 		selectedUnit=null;
 		selectedBuilding=null;
 		
 	}
 	
-	private void initialMap(Building[] buildings, Unit[] units, Resource[] resources) throws NumberFormatException, SlickException {
+	private void initialMap(ArrayList<Building> buildings, ArrayList<Unit> units, ArrayList<Resource> resources) throws NumberFormatException, SlickException {
 		try (Scanner scanner = new Scanner(new FileReader("assets/objects.csv"))) {
 		    while (scanner.hasNextLine()) {
 		    	String text=scanner.nextLine();
@@ -79,24 +81,24 @@ public class World {
 		    	String temp=columns[0];
 		    	switch(temp) {
 		    	case "command_centre":
-		    		buildings[buildingsCnt++]=new CommandCentre(Integer.parseInt(columns[1]),Integer.parseInt(columns[2]));
+		    		buildings.add(new CommandCentre(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
 		    		
 		    	
 		    	case "engineer":
-		    		units[unitsCnt++]=new Engineer(Integer.parseInt(columns[1]),Integer.parseInt(columns[2]));
+		    		units.add(new Engineer(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
 		    		
 		    	case "metal_mine":
-		    		resources[resourcesCnt++]=new Metal(Integer.parseInt(columns[1]),Integer.parseInt(columns[2]));
+		    		resources.add(new Metal(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
 		    		
 		    	case "unobtainium_mine":
-		    		resources[resourcesCnt++]=new Unobtainium(Integer.parseInt(columns[1]),Integer.parseInt(columns[2]));
+		    		resources.add(new Unobtainium(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
 		    	
 		    	case "pylon":
-		    		buildings[buildingsCnt++]=new Pylon(Integer.parseInt(columns[1]),Integer.parseInt(columns[2]));
+		    		buildings.add(new Pylon(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
 		    	}
 		    }
@@ -108,30 +110,46 @@ public class World {
 		
 	}
 	
-	public Unit select(Unit[] units,Input input) {
-		for (int i=0; i<unitsCnt;i++){
-			if(Math.hypot(units[i].getX()-(input.getAbsoluteMouseX()-camera.getX()), units[i].getY()-(input.getAbsoluteMouseY()-camera.getY()))<selectDistance) {
-				units[i].isSelected=true;
-				worldX=units[i].getX();
-				worldY=units[i].getY();
+	public Unit selectUnit(ArrayList<Unit> units,Input input) {
+		for (Unit unit:units){
+			if(Math.hypot(unit.getX()-(input.getAbsoluteMouseX()-camera.getX()), unit.getY()-(input.getAbsoluteMouseY()-camera.getY()))<selectDistance) {
+				unit.isSelected=true;
+				worldX=unit.getX();
+				worldY=unit.getY();
 				camera.snap(this);
-				return units[i];
+				return unit;
 			}
 		}
 		return null;
 	}
-	public Building select(Building[] buildings,Input input) {
-		for (int i=0; i<buildingsCnt;i++){
+	public Building selectBuilding(ArrayList<Building> buildings,Input input) {
+		for (Building building:buildings){
+			if(building instanceof Pylon) {
+				continue;
+			}
 			
-			if(Math.hypot(buildings[i].getX()-(input.getAbsoluteMouseX()-camera.getX()), buildings[i].getY()-(input.getAbsoluteMouseY()-camera.getY()))<selectDistance) {
-				buildings[i].isSelected=true;
-				worldX=buildings[i].getX();
-				worldY=buildings[i].getY();
+			if(Math.hypot(building.getX()-(input.getAbsoluteMouseX()-camera.getX()), building.getY()-(input.getAbsoluteMouseY()-camera.getY()))<selectDistance) {
+				building.isSelected=true;
+				worldX=building.getX();
+				worldY=building.getY();
 				camera.snap(this);
-				return buildings[i];
+				return building;
 			}
 		}
 		return null;
+		
+	}
+	public Building closestCmdCent(Unit unit,ArrayList<Building> buildings) {
+		Building temp=null;
+		float mindist= Float.MAX_VALUE;
+		for(Building building:buildings) {
+			if (building instanceof CommandCentre) {
+				if(Math.hypot(unit.getX()-building.getX(), unit.getY()-building.getY())<mindist) {
+					temp=building;
+				}
+			}
+		}
+		return temp;
 		
 	}
 	/** Update the game state for a frame.
@@ -147,8 +165,22 @@ public class World {
 			camera.isOffset=true;
 		}
 		if(input.isMousePressed(Input.MOUSE_LEFT_BUTTON)) {
-			selectedUnit=select(units,input);
-			selectedBuilding=select(buildings,input);
+			if(selectedUnit!=null) {
+				selectedUnit.isSelected=false;
+				if(Math.hypot(selectedUnit.getX()-selectedUnit.getDestX(), selectedUnit.getY()-selectedUnit.getDestY())>35) {
+					unitMoving=true;
+				}
+			}if(selectedBuilding!=null) {
+				selectedBuilding.isSelected=false;
+			}
+			selectedUnit=selectUnit(units,input);
+			if(selectedUnit==null) {
+			selectedBuilding=selectBuilding(buildings,input);
+			}
+			else{
+				selectedBuilding=null;
+			}
+			
 		}
 		// Calling the method move in the class Unit which allows player to move their piece
 		if(selectedUnit!=null) {
@@ -157,17 +189,48 @@ public class World {
 			selectedUnit.setdestX(input.getAbsoluteMouseX()-camera.getX());
 			selectedUnit.setdestY(input.getAbsoluteMouseY()-camera.getY());
 			unitMoving=true;
+			if(selectedUnit instanceof Engineer) {
+				((Engineer) selectedUnit).isMining=false;
+				((Engineer) selectedUnit).pastTime=0;
+			}
 		}
 		
-		selectedUnit.move(delta,map,camera);
 		if(unitMoving==true) {
 			
 			if (camera.isOffset==false) {
 				camera.UnitMove(selectedUnit,this);
-				
 			}
 		}
+	}
+		for (Unit unit:units){
+			unit.move(delta,map,camera);
+			if(unit instanceof Engineer) {
+				if(((Engineer) unit).isMining==false) {
+					currMined=(unit.canMine(resources));
+					if(currMined!= null)
+					{
+						((Engineer) unit).isMining=true;
+					}		
+				}
+				for(Building building : buildings) {
+					if(building instanceof CommandCentre && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35) {
+						if (((Engineer) unit).carryType=='M') {
+							currMetal+=((Engineer) unit).currCarry;
+							((Engineer) unit).currCarry=0;
+						}
+						if (((Engineer) unit).carryType=='U') {
+							currUnobtainium+=((Engineer) unit).currCarry;
+							((Engineer) unit).currCarry=0;
+						}
+					}
+				}
+			//}
+			if(((Engineer) unit).isMining==true) {
+				unit.mineMaterial(closestCmdCent(unit,buildings),delta,currMined,this);
+			}
+			}
 		}
+		
 	}
 	
 	/** Render the entire screen, so it reflects the current game state.
@@ -181,20 +244,25 @@ public class World {
 		// Rendering the map
 		map.render(0,0);
 		//Rendering the player's piece- Unit
-		for (int i=0; i<buildingsCnt;i++){
-			buildings[i].render();
+		for (Building building:buildings){
+			building.render();
 
+		}
+		for (Resource resource: resources){
+			resource.render();
+			
 		}
 		for (Unit unit : units){
 			if(unit!=null) {
 			unit.render();
 			}
 		}
-		for (Resource resource: resources){
-			if(resource!=null) {
-			resource.render();
-			}
+		
+		g.drawString("Metal: "+currMetal+"\nUnobtainium: "+currUnobtainium, 32-camera.getX(), 32-camera.getY());
+		if(selectedBuilding instanceof Building) {
+			g.drawString("1- Create Scout\n2- Create Builder\n3- Create Engineer\n", 32-camera.getX(), 100-camera.getY());
 		}
+
 		
 	}
 }

@@ -5,7 +5,7 @@ public class Metal extends Resource {
 	public Metal(float x,float y) throws SlickException
 	{
 		super(x,y);
-		amount=500;
+		amount=3;
 		image=new Image("assets/resources/metal_mine.png");
 	}
 	
