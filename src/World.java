@@ -39,7 +39,8 @@ public class World {
 	public int currMetal;
 	public int currUnobtainium;
 	public boolean unitMoving;
-	public Resource currMined;
+
+	public Unit truckdestroyed;
 	
 	public void setWorldX(float x) {
     	worldX=x;
@@ -67,9 +68,11 @@ public class World {
 		buildings= new ArrayList<Building>();
 		units= new ArrayList<Unit>();
 		resources= new ArrayList<Resource>();
+		buildings.add(new Factory(100,100));
 		initialMap(buildings,units,resources);
 		selectedUnit=null;
 		selectedBuilding=null;
+		truckdestroyed=null;
 		
 	}
 	
@@ -146,6 +149,7 @@ public class World {
 			if (building instanceof CommandCentre) {
 				if(Math.hypot(unit.getX()-building.getX(), unit.getY()-building.getY())<mindist) {
 					temp=building;
+					mindist=(float) Math.hypot(unit.getX()-building.getX(), unit.getY()-building.getY());
 				}
 			}
 		}
@@ -155,15 +159,17 @@ public class World {
 	/** Update the game state for a frame.
      * @param input The Slick object for user inputs.
      * @param delta Time passed since last frame (milliseconds).
+	 * @throws SlickException 
      */
 	
-	public void update(Input input, int delta) {
+	public void update(Input input, int delta) throws SlickException {
 		
 		if(input.isKeyDown(Input.KEY_W)||input.isKeyDown(Input.KEY_S)||input.isKeyDown(Input.KEY_A)||input.isKeyDown(Input.KEY_D)) {
 			camera.KeyMove(input, this,delta);
 			unitMoving=false;
 			camera.isOffset=true;
 		}
+		
 		if(input.isMousePressed(Input.MOUSE_LEFT_BUTTON)) {
 			if(selectedUnit!=null) {
 				selectedUnit.isSelected=false;
@@ -182,17 +188,25 @@ public class World {
 			}
 			
 		}
+		
 		// Calling the method move in the class Unit which allows player to move their piece
 		if(selectedUnit!=null) {
 			
 		if(input.isMousePressed(Input.MOUSE_RIGHT_BUTTON)) {
-			selectedUnit.setdestX(input.getAbsoluteMouseX()-camera.getX());
-			selectedUnit.setdestY(input.getAbsoluteMouseY()-camera.getY());
-			unitMoving=true;
 			if(selectedUnit instanceof Engineer) {
 				((Engineer) selectedUnit).isMining=false;
 				((Engineer) selectedUnit).pastTime=0;
 			}
+			
+			if(selectedUnit instanceof Builder && ((Builder )selectedUnit).isCreating) {
+				
+			}
+			else {
+			selectedUnit.setdestX(input.getAbsoluteMouseX()-camera.getX());
+			selectedUnit.setdestY(input.getAbsoluteMouseY()-camera.getY());
+			unitMoving=true;
+			}
+			
 		}
 		
 		if(unitMoving==true) {
@@ -202,12 +216,17 @@ public class World {
 			}
 		}
 	}
+		
 		for (Unit unit:units){
-			unit.move(delta,map,camera);
+			for(Building building : buildings) {
+				if(building instanceof Pylon && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35&&((Pylon)building).isActivated==false) {
+					((Pylon)building).activate(units);
+				}
+			}
+			
 			if(unit instanceof Engineer) {
 				if(((Engineer) unit).isMining==false) {
-					currMined=(unit.canMine(resources));
-					if(currMined!= null)
+					if(((Engineer) unit).canMine(resources))
 					{
 						((Engineer) unit).isMining=true;
 					}		
@@ -216,23 +235,87 @@ public class World {
 					if(building instanceof CommandCentre && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35) {
 						if (((Engineer) unit).carryType=='M') {
 							currMetal+=((Engineer) unit).currCarry;
+							if(((Engineer) unit).currMined!=null) {
+								((Engineer) unit).isMining=true;
+							}
 							((Engineer) unit).currCarry=0;
 						}
 						if (((Engineer) unit).carryType=='U') {
 							currUnobtainium+=((Engineer) unit).currCarry;
+							if(((Engineer) unit).currMined!=null) {
+								((Engineer) unit).isMining=true;
+							}
 							((Engineer) unit).currCarry=0;
 						}
 					}
 				}
-			//}
-			if(((Engineer) unit).isMining==true) {
-				unit.mineMaterial(closestCmdCent(unit,buildings),delta,currMined,this);
+				if(((Engineer) unit).isMining==true) {
+					((Engineer) unit).mineMaterial(closestCmdCent(unit,buildings),delta,this);
+				}
 			}
+			if(unit instanceof Builder) {
+				if(unit.isSelected) {
+					if(tileOccupied(unit)==false) {
+						((Builder) unit).canCreateFact(input,this);
+					}
+				}
+				((Builder) unit).createFactory(buildings, delta);
+				if(((Builder )unit).isCreating) {
+					unit.setdestX(unit.getX());
+					unit.setdestY(unit.getY());
+					continue;
+				}
+			}
+			if(unit instanceof Truck) {
+				if(unit.isSelected) {
+					if(tileOccupied(unit)==false) {
+						((Truck) unit).canCreateCmdCent(input);
+					}
+				}
+				((Truck) unit).createCmdCent(buildings, delta);
+				if(((Truck )unit).isCreating) {
+					unit.setdestX(unit.getX());
+					unit.setdestY(unit.getY());
+					continue;
+				}
+				if(((Truck )unit).toBeDestroyed) {
+					truckdestroyed=unit;
+				}
+			}
+			
+			unit.move(delta,map,camera);
+		}
+		if(truckdestroyed!=null) {
+			units.remove(truckdestroyed);
+			units.trimToSize();
+			truckdestroyed=null;
+		}
+		for(Building building:buildings) {
+			if(building instanceof CommandCentre) {
+				if(building.isSelected) {
+					((CommandCentre) selectedBuilding).canCreate(input,this);
+				}
+				((CommandCentre) building).createUnit(units, delta);
+			}
+			if(building instanceof Factory) {
+				if(building.isSelected) {
+					((Factory) selectedBuilding).canCreate(input,this);
+				}
+				((Factory) building).createUnit(units, delta);
 			}
 		}
 		
 	}
 	
+	private boolean tileOccupied(Unit unit) {
+		int tileNumberX=(int)unit.getX()/map.getTileWidth();
+		int tileNumberY=(int)unit.getY()/map.getTileHeight();
+		int currTileId=map.getTileId(tileNumberX,tileNumberY,0);
+		if(map.getTileProperty(currTileId,"occupied","").equals("false")) {
+			return false;
+		}
+		return true;
+	}
 	/** Render the entire screen, so it reflects the current game state.
      * @param g The Slick graphics object, used for drawing.
      */
@@ -253,16 +336,16 @@ public class World {
 			
 		}
 		for (Unit unit : units){
-			if(unit!=null) {
 			unit.render();
-			}
 		}
 		
 		g.drawString("Metal: "+currMetal+"\nUnobtainium: "+currUnobtainium, 32-camera.getX(), 32-camera.getY());
-		if(selectedBuilding instanceof Building) {
-			g.drawString("1- Create Scout\n2- Create Builder\n3- Create Engineer\n", 32-camera.getX(), 100-camera.getY());
+		if(selectedBuilding !=null) {
+			selectedBuilding.printInfo(g,camera);
 		}
-
+		if(selectedUnit!=null) {
+			selectedUnit.printInfo(g,camera);
+		}
 		
 	}
 }

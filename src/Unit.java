@@ -1,5 +1,6 @@
-import java.util.ArrayList;
 
+
+import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.tiled.TiledMap;
@@ -114,13 +115,6 @@ public abstract class  Unit {
 	{
 		return this.speed;
 	}
-	public Resource canMine(ArrayList<Resource> resource) {
-		return null;
-	}
-
-	public void mineMaterial(Building building, int delta,Resource resource,World world) {
-		return;
-	}
 
 	public float getDestX() {
 		return destX;
@@ -128,5 +122,9 @@ public abstract class  Unit {
 
 	public float getDestY() {
 		return destY;
+	}
+
+	public void printInfo(Graphics g, Camera camera) {
+		return;
 	}
 }

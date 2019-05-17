@@ -1,3 +1,4 @@
+import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
 
@@ -28,5 +29,9 @@ public abstract class Building {
 	}
 	
 	public void render() {
+	}
+	
+	public void printInfo(Graphics g, Camera camera) {
+		g.drawString("1- Create Scout\n2- Create Builder\n3- Create Engineer\n", 32-camera.getX(), 100-camera.getY());
 	}
 }

@@ -2,7 +2,7 @@ import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
 
 public class Scout extends Unit{
-	private final float speed=0.25f;
+	private final float speed=0.3f;
 	public Scout(float x,float y) throws SlickException
 	{
 		super(x,y);
