@@ -9,7 +9,7 @@ public class Builder extends Unit{
 	private final float speed=0.1f;
 	public boolean isCreating;
 	public long pastTime;
-	public int costFact=10;
+	public int costFact=100;
 	public int createSpd=10;
 	public Builder(float x,float y) throws SlickException
 	{

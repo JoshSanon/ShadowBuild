@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+
 
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
@@ -21,12 +21,4 @@ public class Pylon extends Building{
     	image.drawCentered(this.getX(), this.getY());
     }
 
-	public void activate(ArrayList<Unit> units) {
-		isActivated=true;
-		for(Unit unit:units) {
-			if(unit instanceof Engineer) {
-				((Engineer) unit).carryAmount++;
-			}
-		}
-	}
 }

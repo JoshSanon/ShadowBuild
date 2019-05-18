@@ -41,6 +41,8 @@ public class World {
 	public boolean unitMoving;
 
 	public Unit truckdestroyed;
+
+	public int numPylonActive;
 	
 	public void setWorldX(float x) {
     	worldX=x;
@@ -68,11 +70,11 @@ public class World {
 		buildings= new ArrayList<Building>();
 		units= new ArrayList<Unit>();
 		resources= new ArrayList<Resource>();
-		buildings.add(new Factory(100,100));
 		initialMap(buildings,units,resources);
 		selectedUnit=null;
 		selectedBuilding=null;
 		truckdestroyed=null;
+		numPylonActive=0;
 		
 	}
 	
@@ -220,19 +222,20 @@ public class World {
 		for (Unit unit:units){
 			for(Building building : buildings) {
 				if(building instanceof Pylon && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35&&((Pylon)building).isActivated==false) {
-					((Pylon)building).activate(units);
+					((Pylon) building).isActivated=true;
+					numPylonActive++;
 				}
 			}
 			
 			if(unit instanceof Engineer) {
 				if(((Engineer) unit).isMining==false) {
-					if(((Engineer) unit).canMine(resources))
+					if(((Engineer) unit).canMine(resources,numPylonActive))
 					{
 						((Engineer) unit).isMining=true;
 					}		
 				}
 				for(Building building : buildings) {
-					if(building instanceof CommandCentre && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35) {
+					if(building instanceof CommandCentre && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35&&Math.hypot(building.getX()-unit.getDestX(),building.getY()-unit.getDestY())<=35) {
 						if (((Engineer) unit).carryType=='M') {
 							currMetal+=((Engineer) unit).currCarry;
 							if(((Engineer) unit).currMined!=null) {
@@ -250,7 +253,7 @@ public class World {
 					}
 				}
 				if(((Engineer) unit).isMining==true) {
-					((Engineer) unit).mineMaterial(closestCmdCent(unit,buildings),delta,this);
+					((Engineer) unit).mineMaterial(closestCmdCent(unit,buildings),delta,this,numPylonActive);
 				}
 			}
 			if(unit instanceof Builder) {

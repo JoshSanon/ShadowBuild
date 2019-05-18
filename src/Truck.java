@@ -9,7 +9,7 @@ public class Truck extends Unit {
 	private final float speed=0.25f;
 	public boolean isCreating;
 	public long pastTime;
-	public int createSpd=5;
+	public int createSpd=15;
 	public boolean toBeDestroyed;
 	public Truck(float x,float y) throws SlickException
 	{

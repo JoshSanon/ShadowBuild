@@ -4,8 +4,8 @@ import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
 
 public class Engineer extends Unit{
-	private final float speed=0.3f;
-	public final int mineSpeed=1;
+	private final float speed=0.1f;
+	public final int mineSpeed=5;
 	public int carryAmount;
 	public int currCarry;
 	public char carryType;
@@ -29,8 +29,8 @@ public class Engineer extends Unit{
 	{
 		return this.speed;
 	}
-	public boolean canMine(ArrayList<Resource> resources) {
-		if(currCarry==carryAmount) {
+	public boolean canMine(ArrayList<Resource> resources,int numPylonActive) {
+		if(currCarry==carryAmount+numPylonActive) {
 			return false;
 		}
 		if(hasReachedDest==true) {
@@ -43,7 +43,7 @@ public class Engineer extends Unit{
 		}
 		return false;
 	}
-	public void mineMaterial(Building building , int delta,World world){
+	public void mineMaterial(Building building , int delta,World world,int numPylonActive){
 		if(currMined.amount>0 && Math.hypot(currMined.getX()-getX(), currMined.getY()-getY())<35) {
 			if (pastTime<mineSpeed*1000) {
 				pastTime+=delta;
@@ -57,17 +57,20 @@ public class Engineer extends Unit{
 
 				}
 				pastTime=0;
-				if(currMined.amount-carryAmount<=0) {
+				System.out.println(currMined.amount);
+				if(currMined.amount-(carryAmount+numPylonActive)<=0) {
+					System.out.println(currMined.amount);
 					currCarry=currMined.amount;
 					currMined.amount=0;
+					System.out.println(currMined.amount);
 					world.resources.remove(currMined);
 					world.resources.trimToSize();
 					currMined=null;
 					isMining=false;
 				}
 				else {
-					currCarry=carryAmount;
-					currMined.amount-=carryAmount;
+					currCarry=carryAmount+numPylonActive;
+					currMined.amount-=carryAmount+numPylonActive;
 				}
 				setdestX(building.getX());
 				setdestY(building.getY());

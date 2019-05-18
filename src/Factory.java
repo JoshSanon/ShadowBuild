@@ -7,7 +7,7 @@ import org.newdawn.slick.SlickException;
 
 public class Factory extends Building {
 	
-	public int costTruck=10;
+	public int costTruck=150;
 	public boolean isTraining;
 	private long pastTime;
 	private int createSpd=5;
