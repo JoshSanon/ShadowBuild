@@ -1,7 +1,6 @@
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
-import org.newdawn.slick.gui.TextField;
 import org.newdawn.slick.tiled.TiledMap;
 
 import java.io.FileNotFoundException;
@@ -14,44 +13,59 @@ import java.util.Scanner;
  */
 
 public class World {
-	// Initializing the variable map which is an object that stores the entire map of the game
+	//Initializing the variable map which is an object that stores the entire map of the game
 	private static TiledMap map;
 	
+	//Initializing variables worldX and worldY which are used for camera purposes
 	public float worldX;
 	public float worldY;
 	
 	public final static int selectDistance=35;
-	// Initializing the variable camera which is an object that stores the camera of the game, showing a specific part of the map
-	private static Camera camera;
+	//Initializing the variable camera which is an object that stores the camera of the game, showing a specific part of the map
+	public Camera camera;
 	
-	private ArrayList<Building> buildings;
-	
-	// Initializing variables which will hold the values of height and width in pixels of the map
+	//Initializing variables which will hold the values of height and width in pixels of the map
 	private static int mapWidthPix;
 	private static int mapHeightPix;
 	
-	// Initializing the variable Unit, which is an object and the player's piece in the game
-	private ArrayList<Unit> units;
+	/*Initializing the variable units,resources and buildings which are array lists consisting
+	 *  of objects of the Unit, Resource and Building class respectively
+	 */
+	public ArrayList<Unit> units;
 	public ArrayList<Resource>resources;
+	public ArrayList<Building> buildings;
+	
+	/*Initializing selectedUnit and selectedBuilding which will store the currently selected unit
+	 *  or building respectively
+	 */
 	public Unit selectedUnit;
 	public Building selectedBuilding;
-	public TextField text;
+	
+	/*Initializing currMetal and currUbonbtainium which will store the player's metal values
+	 *  and unobtainium values respectively
+	 */
 	public int currMetal;
 	public int currUnobtainium;
+	
+	//Initializing unitMoving which is a boolean to check whether a unit is moving or not
 	public boolean unitMoving;
-
+	
+	//Initializing truckdestroyed which will store the truck to be destroyed
 	public Unit truckdestroyed;
-
+	
+	//Initializing numPulonActive which will store the number of active Pylons
 	public int numPylonActive;
 	
+	//Getters and Setters for worldX and worldY
 	public void setWorldX(float x) {
     	worldX=x;
     }
     public void setworldY(float y) {
     	worldY=y;
     }
+    
+    
 	// Constructor to instantiate World
-	
 	public World() throws SlickException {
 		// Creating an object of class TiledMap, map and giving it details from main.tmx file
 		map= new TiledMap("assets/main.tmx");
@@ -62,34 +76,62 @@ public class World {
 		
 		// Creating an object of class Camera, camera and giving it the map and its pixel height and width
 		camera= new Camera(map,mapWidthPix,mapHeightPix);
+		
+		//Declaring worldY and worldY values as to point to the centre of the map
 		worldX= mapWidthPix/2;
 		worldY=mapHeightPix/2;
+		
+		//Declaring unitMoving to be false
 		unitMoving=false;
+		
+		//Declaring currMetal and currUnobtainium to both be 0
 		currMetal=0;
 		currUnobtainium=0;
+		
+		//Creating ArrayLists of their respective objects
 		buildings= new ArrayList<Building>();
 		units= new ArrayList<Unit>();
 		resources= new ArrayList<Resource>();
-		initialMap(buildings,units,resources);
+		
+		//Declaring the following variables to be null
 		selectedUnit=null;
 		selectedBuilding=null;
 		truckdestroyed=null;
+		
+		//Declaring numPylonActive to be 0
 		numPylonActive=0;
+		
+		//Calling the initialMap() function to fill in the ArrayLists
+		initialMap(buildings,units,resources);
 		
 	}
 	
+	/** Reads csv file "objects.csv" and stores the relevant data in corresponding array lists
+	 * @param buildings, and ArrayList containing all the buildings in world
+     * @param units, and ArrayList containing all the units in world
+     * @param resources, and ArrayList containing all the resources in world
+     * @throws SlickException 
+     * @throws NumberFormatException
+     */
 	private void initialMap(ArrayList<Building> buildings, ArrayList<Unit> units, ArrayList<Resource> resources) throws NumberFormatException, SlickException {
+		
+		//Using try catch for any errors and reading the csv file
 		try (Scanner scanner = new Scanner(new FileReader("assets/objects.csv"))) {
+			
+			//Using scanner in a while to read the data of the file
 		    while (scanner.hasNextLine()) {
 		    	String text=scanner.nextLine();
 		    	String[] columns = text.split(",");
 		    	String temp=columns[0];
+		    	
+		    	/*Using a switch case to create and store required buildings, resources and units 
+		    	 * in their respective array lists
+		    	 */
 		    	switch(temp) {
 		    	case "command_centre":
 		    		buildings.add(new CommandCentre(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
 		    		
-		    	
 		    	case "engineer":
 		    		units.add(new Engineer(Integer.parseInt(columns[1]),Integer.parseInt(columns[2])));
 		    		break;
@@ -115,25 +157,44 @@ public class World {
 		
 	}
 	
+	/** Checks if a unit is to be selected, returns unit if true and null otherwise
+     * @param units, and ArrayList containing all the units in world
+     * @param input The Slick object for user inputs.
+     */
 	public Unit selectUnit(ArrayList<Unit> units,Input input) {
+
+		//Looping through all the units in world
 		for (Unit unit:units){
-			if(Math.hypot(unit.getX()-(input.getAbsoluteMouseX()-camera.getX()), unit.getY()-(input.getAbsoluteMouseY()-camera.getY()))<selectDistance) {
-				unit.isSelected=true;
+			
+			/*Checking if the click is within 'selectDistance' amount of pixels away if true selects the unit,
+			 *  snaps the camera to its position and returns the unit
+			 */
+			if(unit.distanceUnit(input.getAbsoluteMouseX()-camera.getX(),input.getAbsoluteMouseY()-camera.getY())<selectDistance) {
+				unit.setisSelected(true);
 				worldX=unit.getX();
 				worldY=unit.getY();
 				camera.snap(this);
 				return unit;
 			}
 		}
+		
+		//If no unit is to be selected return null
 		return null;
 	}
+	
+	/** Checks if a building is to be selected, returns building if true and null otherwise
+     * @param buildings, and ArrayList containing all the buildings in world
+     * @param input The Slick object for user inputs.
+     */
 	public Building selectBuilding(ArrayList<Building> buildings,Input input) {
+		
+		//Looping through all the buildings in world
 		for (Building building:buildings){
-			if(building instanceof Pylon) {
-				continue;
-			}
 			
-			if(Math.hypot(building.getX()-(input.getAbsoluteMouseX()-camera.getX()), building.getY()-(input.getAbsoluteMouseY()-camera.getY()))<selectDistance) {
+			/*Checking if the click is within 'selectDistance' amount of pixels away if true selects the building,
+			 *  snaps the camera to its position and returns the building
+			 */
+			if(building.distanceBuilding(input.getAbsoluteMouseX()-camera.getX(),input.getAbsoluteMouseY()-camera.getY())<selectDistance) {
 				building.isSelected=true;
 				worldX=building.getX();
 				worldY=building.getY();
@@ -141,23 +202,38 @@ public class World {
 				return building;
 			}
 		}
-		return null;
 		
+		//If no building is to be selected return null
+		return null;
 	}
+	
+	/** Finds the closest CommandCentre to a unit
+     * @param unit an object of class Unit
+     * @param buildings, and ArrayList containing all the buildings in world
+     */
 	public Building closestCmdCent(Unit unit,ArrayList<Building> buildings) {
 		Building temp=null;
 		float mindist= Float.MAX_VALUE;
+		
+		//Loops through all buildings in world
 		for(Building building:buildings) {
-			if (building instanceof CommandCentre) {
-				if(Math.hypot(unit.getX()-building.getX(), unit.getY()-building.getY())<mindist) {
+			
+			//Checks whether building is a CommandCentre
+			if (building instanceof CommandCentre) 
+			{
+				//Checks if the CommandCentre is the closest one or not
+				if(building.distanceBuilding(unit.getX(),unit.getY())<mindist) {
 					temp=building;
-					mindist=(float) Math.hypot(unit.getX()-building.getX(), unit.getY()-building.getY());
+					mindist=(float) building.distanceBuilding(unit.getX(),unit.getY());
 				}
 			}
 		}
-		return temp;
 		
+		//Returns closest CommandCentre
+		return temp;
 	}
+	
+	
 	/** Update the game state for a frame.
      * @param input The Slick object for user inputs.
      * @param delta Time passed since last frame (milliseconds).
@@ -166,21 +242,30 @@ public class World {
 	
 	public void update(Input input, int delta) throws SlickException {
 		
+		//Movement of the camera using keys WASD
 		if(input.isKeyDown(Input.KEY_W)||input.isKeyDown(Input.KEY_S)||input.isKeyDown(Input.KEY_A)||input.isKeyDown(Input.KEY_D)) {
 			camera.KeyMove(input, this,delta);
 			unitMoving=false;
 			camera.isOffset=true;
 		}
 		
+		//Check for if a unit or building is to be selected
 		if(input.isMousePressed(Input.MOUSE_LEFT_BUTTON)) {
+			
+			//First deselect any previously selected Unit if selected
 			if(selectedUnit!=null) {
-				selectedUnit.isSelected=false;
-				if(Math.hypot(selectedUnit.getX()-selectedUnit.getDestX(), selectedUnit.getY()-selectedUnit.getDestY())>35) {
+				selectedUnit.setisSelected(false);
+				if(selectedUnit.distanceUnit(selectedUnit.getDestX(), selectedUnit.getDestY())>selectDistance) {
 					unitMoving=true;
 				}
-			}if(selectedBuilding!=null) {
+			}
+			
+			//Then deselect any previously selected building if selected
+			if(selectedBuilding!=null) {
 				selectedBuilding.isSelected=false;
 			}
+			
+			//Calling selectedUnits and then selectBuilding if no unit is selected
 			selectedUnit=selectUnit(units,input);
 			if(selectedUnit==null) {
 			selectedBuilding=selectBuilding(buildings,input);
@@ -191,161 +276,85 @@ public class World {
 			
 		}
 		
-		// Calling the method move in the class Unit which allows player to move their piece
+		//Checks for when a unit is selected
 		if(selectedUnit!=null) {
 			
-		if(input.isMousePressed(Input.MOUSE_RIGHT_BUTTON)) {
-			if(selectedUnit instanceof Engineer) {
-				((Engineer) selectedUnit).isMining=false;
-				((Engineer) selectedUnit).pastTime=0;
-			}
-			
-			if(selectedUnit instanceof Builder && ((Builder )selectedUnit).isCreating) {
+			//Checks for when mouse right clicks while a unit is selected
+			if(input.isMousePressed(Input.MOUSE_RIGHT_BUTTON)) {
 				
-			}
-			else {
-			selectedUnit.setdestX(input.getAbsoluteMouseX()-camera.getX());
-			selectedUnit.setdestY(input.getAbsoluteMouseY()-camera.getY());
-			unitMoving=true;
+				//Discontinuing mining
+				if(selectedUnit instanceof Engineer) {
+					((Engineer) selectedUnit).isMining=false;
+					((Engineer) selectedUnit).pastTime=0;
+				}
+				
+				//Setting destination of unit to mouse coordinates unless a builder is building
+				if(!(selectedUnit instanceof Builder && ((Builder )selectedUnit).isCreating)) {
+					selectedUnit.setdestX(input.getAbsoluteMouseX()-camera.getX());
+					selectedUnit.setdestY(input.getAbsoluteMouseY()-camera.getY());
+					unitMoving=true;
+				}
 			}
 			
+			//Checks for when a unit is moving and is selected, adjusts camera accordingly
+			if(unitMoving==true) {
+				if (camera.isOffset==false) {
+					camera.UnitMove(selectedUnit,this);
+				}
+			}
 		}
 		
-		if(unitMoving==true) {
-			
-			if (camera.isOffset==false) {
-				camera.UnitMove(selectedUnit,this);
-			}
-		}
-	}
 		
-		for (Unit unit:units){
-			for(Building building : buildings) {
-				if(building instanceof Pylon && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35&&((Pylon)building).isActivated==false) {
-					((Pylon) building).isActivated=true;
-					numPylonActive++;
-				}
-			}
-			
-			if(unit instanceof Engineer) {
-				if(((Engineer) unit).isMining==false) {
-					if(((Engineer) unit).canMine(resources,numPylonActive))
-					{
-						((Engineer) unit).isMining=true;
-					}		
-				}
-				for(Building building : buildings) {
-					if(building instanceof CommandCentre && Math.hypot(building.getX()-unit.getX(), building.getY()-unit.getY())<35&&Math.hypot(building.getX()-unit.getDestX(),building.getY()-unit.getDestY())<=35) {
-						if (((Engineer) unit).carryType=='M') {
-							currMetal+=((Engineer) unit).currCarry;
-							if(((Engineer) unit).currMined!=null) {
-								((Engineer) unit).isMining=true;
-							}
-							((Engineer) unit).currCarry=0;
-						}
-						if (((Engineer) unit).carryType=='U') {
-							currUnobtainium+=((Engineer) unit).currCarry;
-							if(((Engineer) unit).currMined!=null) {
-								((Engineer) unit).isMining=true;
-							}
-							((Engineer) unit).currCarry=0;
-						}
-					}
-				}
-				if(((Engineer) unit).isMining==true) {
-					((Engineer) unit).mineMaterial(closestCmdCent(unit,buildings),delta,this,numPylonActive);
-				}
-			}
-			if(unit instanceof Builder) {
-				if(unit.isSelected) {
-					if(tileOccupied(unit)==false) {
-						((Builder) unit).canCreateFact(input,this);
-					}
-				}
-				((Builder) unit).createFactory(buildings, delta);
-				if(((Builder )unit).isCreating) {
-					unit.setdestX(unit.getX());
-					unit.setdestY(unit.getY());
-					continue;
-				}
-			}
-			if(unit instanceof Truck) {
-				if(unit.isSelected) {
-					if(tileOccupied(unit)==false) {
-						((Truck) unit).canCreateCmdCent(input);
-					}
-				}
-				((Truck) unit).createCmdCent(buildings, delta);
-				if(((Truck )unit).isCreating) {
-					unit.setdestX(unit.getX());
-					unit.setdestY(unit.getY());
-					continue;
-				}
-				if(((Truck )unit).toBeDestroyed) {
-					truckdestroyed=unit;
-				}
-			}
-			
-			unit.move(delta,map,camera);
-		}
+		//Calling Unit.update to update all units in world
+		Unit.update(this, delta,input,map);
+		
+		//Check to see if any truck has build a CommandCentre and needs to be destroyed
 		if(truckdestroyed!=null) {
 			units.remove(truckdestroyed);
 			units.trimToSize();
 			truckdestroyed=null;
 		}
-		for(Building building:buildings) {
-			if(building instanceof CommandCentre) {
-				if(building.isSelected) {
-					((CommandCentre) selectedBuilding).canCreate(input,this);
-				}
-				((CommandCentre) building).createUnit(units, delta);
-			}
-			if(building instanceof Factory) {
-				if(building.isSelected) {
-					((Factory) selectedBuilding).canCreate(input,this);
-				}
-				((Factory) building).createUnit(units, delta);
-			}
-		}
-		
+		//Calling Building.update to update all buildings in world
+		Building.update(this,input,delta);
 	}
 	
-	private boolean tileOccupied(Unit unit) {
-		int tileNumberX=(int)unit.getX()/map.getTileWidth();
-		int tileNumberY=(int)unit.getY()/map.getTileHeight();
-		int currTileId=map.getTileId(tileNumberX,tileNumberY,0);
-		if(map.getTileProperty(currTileId,"occupied","").equals("false")) {
-			return false;
-		}
-		return true;
-	}
 	/** Render the entire screen, so it reflects the current game state.
      * @param g The Slick graphics object, used for drawing.
+	 * @throws SlickException 
      */
 	
-	public void render(Graphics g) {
-		// Rendering the camera (or screen) using translate() and offsetting the map according to the values of x and y of camera
+	public void render(Graphics g) throws SlickException {
+		// Rendering the camera (or screen) using translate() and off setting the map according to the values of x and y of camera
         g.translate(camera.getX(), camera.getY());
 		
 		// Rendering the map
 		map.render(0,0);
-		//Rendering the player's piece- Unit
+		
+		//Rendering all buildings in world
 		for (Building building:buildings){
 			building.render();
 
 		}
+		
+		//Rendering all resources in world
 		for (Resource resource: resources){
 			resource.render();
 			
 		}
+		
+		//Rendering all units in world
 		for (Unit unit : units){
 			unit.render();
 		}
 		
+		//Displaying player's Metal and Unobtainium values
 		g.drawString("Metal: "+currMetal+"\nUnobtainium: "+currUnobtainium, 32-camera.getX(), 32-camera.getY());
+		
+		//Printing relevant information if a building or unit is selected
 		if(selectedBuilding !=null) {
 			selectedBuilding.printInfo(g,camera);
 		}
+		
 		if(selectedUnit!=null) {
 			selectedUnit.printInfo(g,camera);
 		}
